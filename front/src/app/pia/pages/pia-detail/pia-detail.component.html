@@ -1,0 +1,195 @@
+<div class="container-lg mt-4 mb-4">
+    <!-- Breadcrumb -->
+    <nav class="br-breadcrumb mb-4" aria-label="Navegação">
+        <ol>
+            <li><a href="#/">Home</a></li>
+            <li><a (click)="voltar()">Pessoas de Interesse Antifraude (PIA)</a></li>
+            <li aria-current="page" *ngIf="pia">{{ pia.id }}</li>
+        </ol>
+    </nav>
+
+    <!-- Estado de Carregamento -->
+    <div *ngIf="carregando" class="loading-state">
+        <div class="spinner"></div>
+        <p>Carregando detalhes...</p>
+    </div>
+
+    <!-- Estado de Erro -->
+    <div *ngIf="erroCarregamento" class="error-state">
+        <i class="fas fa-exclamation-triangle fa-2x"></i>
+        <h2>Registro não encontrado</h2>
+        <p>Não foi possível carregar os detalhes deste registro.</p>
+        <button class="br-button primary" type="button" (click)="voltar()">
+            Voltar à Lista
+        </button>
+    </div>
+
+    <!-- Detalhes PIA -->
+    <div *ngIf="!carregando && !erroCarregamento && pia" class="detail-container">
+        <!-- Header com botões -->
+        <div class="row align-items-center mb-4">
+            <div class="col">
+                <h1 class="mb-1">{{ pia.nome }}</h1>
+                <p class="text-secondary mb-0">ID: {{ pia.id }}</p>
+            </div>
+            <div class="col-auto">
+                <button class="br-button secondary" type="button" (click)="editarRegistro()">
+                    <i class="fas fa-edit" aria-hidden="true"></i>
+                    Editar
+                </button>
+                <button class="br-button danger ms-2" type="button" (click)="abrirModalConfirmacao()">
+                    <i class="fas fa-trash" aria-hidden="true"></i>
+                    Excluir
+                </button>
+                <button class="br-button secondary ms-2" type="button" (click)="voltar()">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    Voltar
+                </button>
+            </div>
+        </div>
+
+        <!-- Cartões de Informação -->
+        <div class="row mb-4">
+            <!-- Card 1: Risco -->
+            <div class="col-md-4">
+                <div class="info-card">
+                    <div class="info-card__header">
+                        <h3 class="info-card__title">Nível de Risco</h3>
+                    </div>
+                    <div class="info-card__body">
+                        <div class="info-value">
+                            <span [ngClass]="obterClasseBadgeRisco(pia.nivelRisco)">
+                                {{ pia.nivelRisco }}
+                            </span>
+                        </div>
+                        <p class="info-label">Taxa: {{ pia.taxaRisco }}%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Status -->
+            <div class="col-md-4">
+                <div class="info-card">
+                    <div class="info-card__header">
+                        <h3 class="info-card__title">Status da Análise</h3>
+                    </div>
+                    <div class="info-card__body">
+                        <div class="info-value">
+                            <span [ngClass]="obterClasseBadgeStatus(pia.statusAnalise)">
+                                {{ pia.statusAnalise }}
+                            </span>
+                        </div>
+                        <p class="info-label">Última atualização: {{ formatarData(pia.dataUltimoRegistro) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Dados -->
+            <div class="col-md-4">
+                <div class="info-card">
+                    <div class="info-card__header">
+                        <h3 class="info-card__title">Informações Pessoais</h3>
+                    </div>
+                    <div class="info-card__body">
+                        <div class="info-value">
+                            <p class="info-label">CPF: {{ formatarCPF(pia.cpf) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Detalhes Expandida -->
+        <div class="detail-section">
+            <h2 class="detail-section__title">Informações Completas</h2>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">Nome Completo</label>
+                        <p class="detail-item__value">{{ pia.nome }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">CPF</label>
+                        <p class="detail-item__value">{{ formatarCPF(pia.cpf) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">ID ONAC</label>
+                        <p class="detail-item__value">{{ pia.id }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">Taxa de Risco</label>
+                        <p class="detail-item__value">{{ pia.taxaRisco }}%</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">Nível de Risco</label>
+                        <p class="detail-item__value">
+                            <span [ngClass]="obterClasseBadgeRisco(pia.nivelRisco)">
+                                {{ pia.nivelRisco }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">Status da Análise</label>
+                        <p class="detail-item__value">
+                            <span [ngClass]="obterClasseBadgeStatus(pia.statusAnalise)">
+                                {{ pia.statusAnalise }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="detail-item">
+                        <label class="detail-item__label">Data do Último Registro</label>
+                        <p class="detail-item__value">{{ formatarData(pia.dataUltimoRegistro) }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmação Exclusão -->
+<div class="br-modal" *ngIf="mostrarModalConfirmacao" role="dialog" aria-modal="true">
+    <div class="br-modal__content">
+        <div class="br-modal__header">
+            <h2 class="br-modal__title">Confirmar Exclusão</h2>
+            <button class="br-button icon-only secondary" type="button" (click)="fecharModalConfirmacao()"
+                aria-label="Fechar modal">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="br-modal__body">
+            <p>Deseja realmente excluir este registro?</p>
+            <p class="text-secondary"><strong>ID:</strong> {{ pia?.id }}</p>
+        </div>
+        <div class="br-modal__footer">
+            <button class="br-button secondary" type="button" (click)="fecharModalConfirmacao()">
+                Cancelar
+            </button>
+            <button class="br-button danger" type="button" (click)="confirmarExclusao()">
+                Confirmar
+            </button>
+        </div>
+    </div>
+</div>
+<div class="br-modal__backdrop" *ngIf="mostrarModalConfirmacao" (click)="fecharModalConfirmacao()"></div>

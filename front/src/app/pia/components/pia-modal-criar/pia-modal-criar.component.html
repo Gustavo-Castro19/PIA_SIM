@@ -1,0 +1,84 @@
+<div class="br-modal" role="dialog" aria-modal="true">
+    <div class="br-modal__content">
+        <!-- Header -->
+        <div class="br-modal__header">
+            <h2 class="br-modal__title">{{ tituloModal }}</h2>
+            <button class="br-button icon-only secondary" type="button" (click)="fecharModal()"
+                aria-label="Fechar modal">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="br-modal__body">
+            <form [formGroup]="formulario" (ngSubmit)="enviarFormulario()">
+
+                <!-- Campo Nome -->
+                <div class="br-input mb-3">
+                    <label for="nome">Nome *</label>
+                    <input id="nome" type="text" placeholder="Digite o nome da pessoa" formControlName="nome"
+                        [class.is-invalid]="formulario.get('nome')?.invalid && formulario.get('nome')?.touched" />
+                    <div class="error-messages"
+                        *ngIf="formulario.get('nome')?.invalid && formulario.get('nome')?.touched">
+                        <p class="error" *ngFor="let erro of obterErrosNome()">{{ erro }}</p>
+                    </div>
+                </div>
+
+                <!-- Campo CPF -->
+                <div class="br-input mb-3">
+                    <label for="cpf">CPF *</label>
+                    <input id="cpf" type="text" placeholder="000.000.000-00" formControlName="cpf"
+                        (input)="formatarCPFInput($event)"
+                        [class.is-invalid]="formulario.get('cpf')?.invalid && formulario.get('cpf')?.touched" />
+                    <div class="error-messages"
+                        *ngIf="formulario.get('cpf')?.invalid && formulario.get('cpf')?.touched">
+                        <p class="error" *ngFor="let erro of obterErrosCPF()">{{ erro }}</p>
+                    </div>
+                </div>
+
+                <!-- Campo Taxa de Risco -->
+                <div class="br-input mb-3">
+                    <label for="taxaRisco">Taxa de Risco (0-100) *</label>
+                    <input id="taxaRisco" type="number" placeholder="0" min="0" max="100" formControlName="taxaRisco"
+                        [class.is-invalid]="formulario.get('taxaRisco')?.invalid && formulario.get('taxaRisco')?.touched" />
+                    <div class="error-messages"
+                        *ngIf="formulario.get('taxaRisco')?.invalid && formulario.get('taxaRisco')?.touched">
+                        <p class="error" *ngFor="let erro of obterErrosTaxa()">{{ erro }}</p>
+                    </div>
+
+                    <!-- Indicador de Nível de Risco -->
+                    <div class="risco-indicator mt-2">
+                        <span [ngClass]="'br-tag ' + obterClasseRisco()">
+                            {{ obterTextoTaxaRisco() }} ({{ formulario.get('taxaRisco')?.value || 0 }})
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Campo Status -->
+                <div class="br-select mb-3">
+                    <label for="statusAnalise">Status da Análise *</label>
+                    <select id="statusAnalise" formControlName="statusAnalise">
+                        <option *ngFor="let opcao of opcoesStatus" [value]="opcao.value">
+                            {{ opcao.label }}
+                        </option>
+                    </select>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="br-modal__footer">
+            <button class="br-button secondary" type="button" (click)="fecharModal()">
+                Cancelar
+            </button>
+            <button class="br-button primary" type="button" (click)="enviarFormulario()"
+                [disabled]="formulario.invalid">
+                {{ textoBotaoPrincipal }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Backdrop -->
+<div class="br-modal__backdrop" (click)="fecharModal()"></div>
