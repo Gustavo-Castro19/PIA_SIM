@@ -1,0 +1,64 @@
+erDiagram
+    usuario ||--o{ incidente_analise : "valida"
+    incidente ||--|| incidente_analise : "gera"
+    incidente ||--o{ pia : "alimenta"
+    pia ||--o{ pia_historico : "audita"
+    usuario ||--o{ pia : "cria"
+
+    usuario {
+        bigint id PK
+        varchar nome
+        varchar email
+        varchar senha_hash
+        varchar perfil
+        boolean ativo
+        timestamp data_criacao
+    }
+
+    incidente {
+        bigint id PK
+        varchar sid
+        varchar titulo
+        text descricao
+        text descricao_anonimizada
+        varchar tipo_fraude
+        varchar status
+        varchar canal_recebimento
+        date data_ocorrencia
+    }
+
+    incidente_analise {
+        bigint id PK
+        bigint incidente_id FK
+        varchar sid
+        varchar ia_risco_sugerido
+        varchar ia_resumo
+        decimal ia_confianca
+        varchar ia_status_processamento
+        varchar risco_validado
+        bigint analista_id FK
+        jsonb palavras_chave_extraidas
+    }
+
+    pia {
+        bigint id PK
+        varchar sid UK
+        varchar grau_interesse
+        varchar status
+        int total_incidentes
+        varchar ia_risco_atual
+        varchar ia_ultimo_resumo
+        bigint criado_por FK
+    }
+
+    pia_historico {
+        bigint id PK
+        bigint pia_id FK
+        varchar sid
+        varchar tipo_operacao
+        varchar grau_interesse_anterior
+        varchar grau_interesse_novo
+        varchar status_anterior
+        varchar status_novo
+        bigint usuario_id FK
+    }

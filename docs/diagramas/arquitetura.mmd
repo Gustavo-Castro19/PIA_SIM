@@ -1,0 +1,29 @@
+flowchart LR
+    subgraph Frontend["Frontend - Angular 17"]
+        A["Componentes\nDSGOV"]
+        B["PiaService\nBehaviorSubject"]
+        C["PiaList\nPiaDetail"]
+    end
+
+    subgraph Backend["Backend - Spring Boot 3"]
+        D["API REST\n/api/v1/pia"]
+        E["Serviço de IA\n(LLM)"]
+    end
+
+    subgraph Database["Banco - PostgreSQL"]
+        F[("incidente")]
+        G[("incidente_analise")]
+        H[("pia")]
+        I[("pia_historico")]
+    end
+
+    A <--> B
+    B <--> C
+    C <--> D
+    D <--> E
+    D <--> F
+    D <--> G
+    G -.->|trigger| H
+    H -.->|trigger| I
+    F -.->|FK| G
+    F -.->|FK| H

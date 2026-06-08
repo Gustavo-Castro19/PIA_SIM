@@ -1,0 +1,11 @@
+flowchart TD
+    A["Sujeito ONAC\n(anonimizador)"] -->|SID + relato| B["Spring Boot\n(Lista PIA)"]
+    B --> C["{ IA disponivel? }"]
+    C -->|Sim| D["LLM\n(análise automática)"]
+    C -->|Não| F["Status:\nPENDENTE_ANALISE_MANUAL"]
+    D -->|risco + resumo| E["incidente_analise"]
+    E --> G["Trigger:\nfn_sincronizar_pia()"]
+    F --> G
+    G --> H[("pia\n(PostgreSQL)")]
+    H --> I["View:\nv_lista_pia"]
+    I --> J["Angular\nFrontend"]
