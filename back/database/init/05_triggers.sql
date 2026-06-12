@@ -22,7 +22,12 @@ CREATE TRIGGER trg_usuario_atualizacao
 
 DROP TRIGGER IF EXISTS trg_pia_auditoria ON pia;
 CREATE TRIGGER trg_pia_auditoria
-    AFTER INSERT OR UPDATE OR DELETE ON pia
+    AFTER INSERT OR UPDATE ON pia
+    FOR EACH ROW EXECUTE FUNCTION fn_auditar_pia();
+
+DROP TRIGGER IF EXISTS trg_pia_auditoria_delete ON pia;
+CREATE TRIGGER trg_pia_auditoria_delete
+    BEFORE DELETE ON pia
     FOR EACH ROW EXECUTE FUNCTION fn_auditar_pia();
 
 DROP TRIGGER IF EXISTS trg_sincronizar_pia_apos_ia ON incidente_analise;

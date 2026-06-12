@@ -130,7 +130,7 @@ COMMENT ON COLUMN incidente_analise.ia_status_processamento IS 'NAO_INICIADO: ag
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS pia_historico (
     id                      BIGSERIAL PRIMARY KEY,
-    pia_id                  BIGINT NOT NULL REFERENCES pia(id) ON DELETE CASCADE,
+    pia_id                  BIGINT NOT NULL,
 
     tipo_operacao           VARCHAR(20) NOT NULL
                             CHECK (tipo_operacao IN ('INCLUSAO', 'EDICAO', 'EXCLUSAO', 'ATUALIZACAO_RISCO', 'ATUALIZACAO_STATUS')),
