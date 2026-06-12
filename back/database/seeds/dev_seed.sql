@@ -6,9 +6,16 @@ BEGIN;
 
 -- Limpa dados de demo anteriores (preserva usuários)
 DELETE FROM incidente_analise WHERE incidente_id IN (
-    SELECT id FROM incidente WHERE titulo LIKE '[DEV]%'
+    SELECT id FROM incidente WHERE titulo LIKE '[DEV]%' OR titulo LIKE '[VALIDACAO]%'
 );
-DELETE FROM incidente WHERE titulo LIKE '[DEV]%';
+
+UPDATE pia SET ultimo_incidente_id = NULL
+WHERE id >= 100
+   OR ultimo_incidente_id IN (
+       SELECT id FROM incidente WHERE titulo LIKE '[DEV]%' OR titulo LIKE '[VALIDACAO]%'
+   );
+
+DELETE FROM incidente WHERE titulo LIKE '[DEV]%' OR titulo LIKE '[VALIDACAO]%';
 DELETE FROM pia WHERE id >= 100;
 
 -- Ajusta sequência de PIA para IDs previsíveis em demo
@@ -204,5 +211,10 @@ INSERT INTO incidente_analise (incidente_id, pia_id, ia_status_processamento)
 VALUES (
     (SELECT id FROM incidente WHERE pia_id = 107 LIMIT 1), 107, 'NAO_INICIADO'
 );
+
+-- Sincroniza sequências após INSERTs com IDs explícitos
+SELECT setval('pia_id_seq', COALESCE((SELECT MAX(id) FROM pia), 1));
+SELECT setval('incidente_id_seq', COALESCE((SELECT MAX(id) FROM incidente), 1));
+SELECT setval('incidente_analise_id_seq', COALESCE((SELECT MAX(id) FROM incidente_analise), 1));
 
 COMMIT;
