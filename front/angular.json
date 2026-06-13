@@ -34,6 +34,12 @@
                     },
                     "configurations": {
                         "production": {
+                            "fileReplacements": [
+                                {
+                                    "replace": "src/environments/environment.ts",
+                                    "with": "src/environments/environment.prod.ts"
+                                }
+                            ],
                             "budgets": [
                                 {
                                     "type": "initial",
@@ -66,7 +72,8 @@
                             "buildTarget": "lista-pia:build:production"
                         },
                         "development": {
-                            "buildTarget": "lista-pia:build:development"
+                            "buildTarget": "lista-pia:build:development",
+                            "proxyConfig": "proxy.conf.json"
                         }
                     },
                     "defaultConfiguration": "development"
