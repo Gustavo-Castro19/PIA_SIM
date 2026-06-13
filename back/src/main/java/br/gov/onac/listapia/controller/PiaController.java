@@ -2,6 +2,7 @@ package br.gov.onac.listapia.controller;
 
 import br.gov.onac.listapia.dto.PiaCreateRequest;
 import br.gov.onac.listapia.dto.PiaCreateResponse;
+import br.gov.onac.listapia.dto.PiaListItemResponse;
 import br.gov.onac.listapia.dto.PiaListResponse;
 import br.gov.onac.listapia.dto.PiaUpdateRequest;
 import br.gov.onac.listapia.dto.PiaUpdateResponse;
@@ -41,6 +42,12 @@ public class PiaController {
             @RequestParam(defaultValue = "10") int por_pagina
     ) {
         return piaService.listar(risco, status, pagina, por_pagina);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Buscar registro PIA por ID")
+    public PiaListItemResponse buscarPorId(@PathVariable Long id) {
+        return piaService.buscarPorId(id);
     }
 
     @GetMapping("/export")

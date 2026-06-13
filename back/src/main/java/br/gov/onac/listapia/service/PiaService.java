@@ -76,6 +76,13 @@ public class PiaService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public PiaListItemResponse buscarPorId(Long id) {
+        return vListaPiaRepository.findById(id)
+                .map(PiaListItemResponse::from)
+                .orElseThrow(() -> new ResourceNotFoundException("PIA não encontrado: " + id));
+    }
+
     @Transactional
     public PiaCreateResponse criar(PiaCreateRequest request) {
         Usuario sistema = usuarioRepository.findByEmail(SISTEMA_EMAIL)
