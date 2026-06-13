@@ -1,6 +1,17 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Pia } from '../../models/pia.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+    PiaCreateRequest,
+    PiaListItem,
+    PiaUpdateRequest,
+    TipoFraude
+} from '../../models/pia.model';
+import {
+    opcoesGrauInteresse,
+    opcoesStatusPia,
+    opcoesTipoFraude,
+    SelectOption
+} from '../../utils/pia-labels';
 
 @Component({
     selector: 'app-pia-modal-criar',
@@ -8,19 +19,17 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
     styleUrls: ['./pia-modal-criar.component.scss']
 })
 export class PiaModalCriarComponent implements OnInit {
-    @Input() piaEmEdicao: Partial<Pia> | null = null;
+    @Input() piaEmEdicao: PiaListItem | null = null;
     @Output() fechar = new EventEmitter<void>();
-    @Output() salvar = new EventEmitter<Partial<Pia>>();
+    @Output() salvarCriar = new EventEmitter<PiaCreateRequest>();
+    @Output() salvarEditar = new EventEmitter<PiaUpdateRequest>();
 
     formulario: FormGroup;
     modo: 'criar' | 'editar' = 'criar';
 
-    opcoesStatus = [
-        { value: 'Pendente', label: 'Pendente' },
-        { value: 'Em Análise', label: 'Em Análise' },
-        { value: 'Concluído', label: 'Concluído' },
-        { value: 'Arquivado', label: 'Arquivado' }
-    ];
+    opcoesStatus = opcoesStatusPia('Selecione o status').filter((o) => o.value !== '');
+    opcoesGrauInteresse = opcoesGrauInteresse('Selecione o grau').filter((o) => o.value !== '');
+    opcoesTipoFraude: SelectOption<TipoFraude>[] = opcoesTipoFraude('Selecione o tipo').filter((o) => o.value !== '');
 
     constructor(private fb: FormBuilder) {
         this.formulario = this.criarFormulario();
@@ -29,134 +38,59 @@ export class PiaModalCriarComponent implements OnInit {
     ngOnInit(): void {
         if (this.piaEmEdicao) {
             this.modo = 'editar';
-            this.preencherFormulario(this.piaEmEdicao);
+            this.formulario = this.criarFormularioEdicao();
+            this.preencherFormularioEdicao(this.piaEmEdicao);
         } else {
             this.modo = 'criar';
+            this.formulario = this.criarFormulario();
         }
     }
 
     criarFormulario(): FormGroup {
         return this.fb.group({
-            nome: ['', [Validators.required, Validators.minLength(3)]],
-            cpf: ['', [Validators.required, this.validarCPF.bind(this)]],
-            taxaRisco: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
-            statusAnalise: ['Pendente', Validators.required]
+            titulo: ['', [Validators.required, Validators.maxLength(300)]],
+            descricaoAnonimizada: ['', [Validators.required, Validators.maxLength(5000)]],
+            tipoFraude: ['', Validators.required]
         });
     }
 
-    preencherFormulario(pia: Partial<Pia>): void {
+    criarFormularioEdicao(): FormGroup {
+        return this.fb.group({
+            grauInteresse: ['', Validators.required],
+            status: ['', Validators.required]
+        });
+    }
+
+    preencherFormularioEdicao(pia: PiaListItem): void {
         this.formulario.patchValue({
-            nome: pia.nome || '',
-            cpf: pia.cpf || '',
-            taxaRisco: pia.taxaRisco || 0,
-            statusAnalise: pia.statusAnalise || 'Pendente'
+            grauInteresse: pia.grauInteresse,
+            status: pia.status
         });
     }
 
-    validarCPF(control: any): { [key: string]: any } | null {
-        const cpf = control.value;
-        if (!cpf) return null;
-
-        // Remove formatação
-        const cpfLimpo = cpf.replace(/\D/g, '');
-
-        // Valida comprimento
-        if (cpfLimpo.length !== 11) {
-            return { 'cpfInvalido': true };
-        }
-
-        // Valida se todos os dígitos são iguais
-        if (/^(\d)\1{10}$/.test(cpfLimpo)) {
-            return { 'cpfInvalido': true };
-        }
-
-        // Calcula primeiro dígito verificador
-        let soma = 0;
-        for (let i = 0; i < 9; i++) {
-            soma += parseInt(cpfLimpo[i]) * (10 - i);
-        }
-        let digito1 = 11 - (soma % 11);
-        digito1 = digito1 >= 10 ? 0 : digito1;
-
-        // Calcula segundo dígito verificador
-        soma = 0;
-        for (let i = 0; i < 10; i++) {
-            soma += parseInt(cpfLimpo[i]) * (11 - i);
-        }
-        let digito2 = 11 - (soma % 11);
-        digito2 = digito2 >= 10 ? 0 : digito2;
-
-        // Valida dígitos verificadores
-        if (digito1 !== parseInt(cpfLimpo[9]) || digito2 !== parseInt(cpfLimpo[10])) {
-            return { 'cpfInvalido': true };
-        }
-
-        return null;
-    }
-
-    obterTextoTaxaRisco(): string {
-        const taxa = this.formulario.get('taxaRisco')?.value || 0;
-        if (taxa >= 70) return 'Alto';
-        if (taxa >= 40) return 'Médio';
-        return 'Baixo';
-    }
-
-    obterClasseRisco(): string {
-        const taxa = this.formulario.get('taxaRisco')?.value || 0;
-        if (taxa >= 70) return 'danger';
-        if (taxa >= 40) return 'warning';
-        return 'success';
-    }
-
-    formatarCPFInput(event: any): void {
-        let cpf = event.target.value.replace(/\D/g, '');
-        if (cpf.length > 11) {
-            cpf = cpf.substring(0, 11);
-        }
-        cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-        this.formulario.get('cpf')?.setValue(cpf, { emitEvent: false });
-    }
-
-    obterErrosNome(): string[] {
-        const control = this.formulario.get('nome');
+    obterErrosTitulo(): string[] {
+        const control = this.formulario.get('titulo');
         const erros: string[] = [];
 
         if (control?.hasError('required')) {
-            erros.push('Nome é obrigatório');
+            erros.push('Título é obrigatório');
         }
-        if (control?.hasError('minlength')) {
-            erros.push('Nome deve ter no mínimo 3 caracteres');
+        if (control?.hasError('maxlength')) {
+            erros.push('Título deve ter no máximo 300 caracteres');
         }
 
         return erros;
     }
 
-    obterErrosCPF(): string[] {
-        const control = this.formulario.get('cpf');
+    obterErrosDescricao(): string[] {
+        const control = this.formulario.get('descricaoAnonimizada');
         const erros: string[] = [];
 
         if (control?.hasError('required')) {
-            erros.push('CPF é obrigatório');
+            erros.push('Descrição é obrigatória');
         }
-        if (control?.hasError('cpfInvalido')) {
-            erros.push('CPF inválido');
-        }
-
-        return erros;
-    }
-
-    obterErrosTaxa(): string[] {
-        const control = this.formulario.get('taxaRisco');
-        const erros: string[] = [];
-
-        if (control?.hasError('required')) {
-            erros.push('Taxa de Risco é obrigatória');
-        }
-        if (control?.hasError('min')) {
-            erros.push('Taxa de Risco deve ser no mínimo 0');
-        }
-        if (control?.hasError('max')) {
-            erros.push('Taxa de Risco deve ser no máximo 100');
+        if (control?.hasError('maxlength')) {
+            erros.push('Descrição deve ter no máximo 5000 caracteres');
         }
 
         return erros;
@@ -169,24 +103,18 @@ export class PiaModalCriarComponent implements OnInit {
 
     enviarFormulario(): void {
         if (this.formulario.invalid) {
-            // Marca todos os campos como tocados para exibir erros
             Object.keys(this.formulario.controls).forEach(key => {
                 this.formulario.get(key)?.markAsTouched();
             });
             return;
         }
 
-        const dados: Partial<Pia> = {
-            ...this.formulario.value
-        };
-
-        // Se estiver editando, preserve o ID
-        if (this.piaEmEdicao && this.piaEmEdicao.id) {
-            dados.id = this.piaEmEdicao.id;
-            dados.dataUltimoRegistro = this.piaEmEdicao.dataUltimoRegistro;
+        if (this.modo === 'criar') {
+            this.salvarCriar.emit(this.formulario.value as PiaCreateRequest);
+        } else {
+            this.salvarEditar.emit(this.formulario.value as PiaUpdateRequest);
         }
 
-        this.salvar.emit(dados);
         this.formulario.reset();
     }
 

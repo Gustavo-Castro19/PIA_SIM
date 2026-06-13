@@ -1,7 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Pia } from '../../models/pia.model';
+import {
+    GrauInteresse,
+    PiaListItem,
+    PiaUpdateRequest,
+    Risco,
+    StatusPia
+} from '../../models/pia.model';
 import { PiaService } from '../../services/pia.service';
+import {
+    labelGrauInteresse,
+    labelRisco,
+    labelStatusPia
+} from '../../utils/pia-labels';
 
 @Component({
     selector: 'app-pia-detail',
@@ -9,10 +20,15 @@ import { PiaService } from '../../services/pia.service';
     styleUrls: ['./pia-detail.component.scss']
 })
 export class PiaDetailComponent implements OnInit {
-    pia: Pia | undefined;
+    pia: PiaListItem | undefined;
     carregando = true;
     erroCarregamento = false;
     mostrarModalConfirmacao = false;
+    mostrarModalEdicao = false;
+
+    labelRisco = labelRisco;
+    labelGrauInteresse = labelGrauInteresse;
+    labelStatusPia = labelStatusPia;
 
     constructor(
         private route: ActivatedRoute,
@@ -25,62 +41,62 @@ export class PiaDetailComponent implements OnInit {
     }
 
     carregarDetalhes(): void {
-        const id = this.route.snapshot.paramMap.get('id');
-        if (id) {
-            this.piaService.getById(id).subscribe(
-                (pia: Pia | undefined) => {
-                    if (pia) {
-                        this.pia = pia;
-                        this.carregando = false;
-                    } else {
-                        this.erroCarregamento = true;
-                        this.carregando = false;
-                    }
-                },
-                (erro) => {
-                    console.error('Erro ao carregar PIA:', erro);
-                    this.erroCarregamento = true;
-                    this.carregando = false;
-                }
-            );
+        const idParam = this.route.snapshot.paramMap.get('id');
+        const id = idParam ? Number(idParam) : NaN;
+
+        if (!idParam || Number.isNaN(id)) {
+            this.erroCarregamento = true;
+            this.carregando = false;
+            return;
         }
+
+        this.piaService.buscarPorId(id).subscribe({
+            next: (pia) => {
+                this.pia = pia;
+                this.carregando = false;
+            },
+            error: () => {
+                this.erroCarregamento = true;
+                this.carregando = false;
+            }
+        });
     }
 
-    obterClasseBadgeRisco(nivelRisco: string): string {
-        switch (nivelRisco) {
-            case 'Alto':
+    obterClasseBadgeRisco(risco: Risco | GrauInteresse): string {
+        switch (risco) {
+            case 'ALTO':
                 return 'br-tag danger';
-            case 'Médio':
+            case 'MEDIO':
                 return 'br-tag warning';
-            case 'Baixo':
+            case 'BAIXO':
                 return 'br-tag success';
             default:
                 return 'br-tag';
         }
     }
 
-    obterClasseBadgeStatus(status: string): string {
+    obterClasseBadgeStatus(status: StatusPia): string {
         switch (status) {
-            case 'Pendente':
-                return 'br-tag warning';
-            case 'Em Análise':
+            case 'ATIVO':
                 return 'br-tag info';
-            case 'Concluído':
+            case 'SUSPEITO':
+                return 'br-tag warning';
+            case 'CONFIRMADO':
+                return 'br-tag danger';
+            case 'INOCENTE':
                 return 'br-tag success';
-            case 'Arquivado':
+            case 'ARQUIVADO':
                 return 'br-tag';
             default:
                 return 'br-tag';
         }
     }
 
-    formatarCPF(cpf: string): string {
-        return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-
-    formatarData(data: Date | string): string {
-        const d = typeof data === 'string' ? new Date(data) : data;
-        return d.toLocaleDateString('pt-BR', {
+    formatarData(data: string): string {
+        if (!data) {
+            return '—';
+        }
+        return new Date(data).toLocaleDateString('pt-BR', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -89,12 +105,34 @@ export class PiaDetailComponent implements OnInit {
         });
     }
 
+    formatarConfianca(valor: number): string {
+        return `${Math.round(valor * 100)}%`;
+    }
+
     editarRegistro(): void {
         if (this.pia) {
-            // Aqui você pode implementar a navegação para uma tela de edição
-            // ou abrir um modal de edição
-            console.log('Editar:', this.pia);
+            this.mostrarModalEdicao = true;
         }
+    }
+
+    fecharModalEdicao(): void {
+        this.mostrarModalEdicao = false;
+    }
+
+    salvarPiaEditada(dados: PiaUpdateRequest): void {
+        if (!this.pia) {
+            return;
+        }
+
+        this.piaService.atualizar(this.pia.id, dados).subscribe({
+            next: () => {
+                this.fecharModalEdicao();
+                this.carregarDetalhes();
+            },
+            error: (erro: Error) => {
+                console.error('Erro ao atualizar PIA:', erro.message);
+            }
+        });
     }
 
     abrirModalConfirmacao(): void {
@@ -106,17 +144,18 @@ export class PiaDetailComponent implements OnInit {
     }
 
     confirmarExclusao(): void {
-        if (this.pia) {
-            this.piaService.delete(this.pia.id).subscribe(
-                () => {
-                    console.log('PIA excluída');
-                    this.router.navigate(['/pia']);
-                },
-                (erro) => {
-                    console.error('Erro ao excluir PIA:', erro);
-                }
-            );
+        if (!this.pia) {
+            return;
         }
+
+        this.piaService.excluir(this.pia.id).subscribe({
+            next: () => {
+                this.router.navigate(['/pia']);
+            },
+            error: (erro: Error) => {
+                console.error('Erro ao excluir PIA:', erro.message);
+            }
+        });
     }
 
     voltar(): void {

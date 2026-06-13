@@ -307,6 +307,14 @@ p {
     margin: 0;
 }
 
+.info-value-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333333;
+    margin: 0;
+    line-height: 1.2;
+}
+
 // Seção de Detalhes
 .detail-section {
     background-color: #ffffff;
@@ -346,6 +354,12 @@ p {
         color: #333333;
         font-weight: 500;
         margin: 0;
+
+        &--text {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-weight: 400;
+        }
 
         .br-tag {
             display: inline-block;

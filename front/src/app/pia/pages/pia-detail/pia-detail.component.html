@@ -4,7 +4,7 @@
         <ol>
             <li><a href="#/">Home</a></li>
             <li><a (click)="voltar()">Pessoas de Interesse Antifraude (PIA)</a></li>
-            <li aria-current="page" *ngIf="pia">{{ pia.id }}</li>
+            <li aria-current="page" *ngIf="pia">#{{ pia.id }}</li>
         </ol>
     </nav>
 
@@ -29,8 +29,8 @@
         <!-- Header com botões -->
         <div class="row align-items-center mb-4">
             <div class="col">
-                <h1 class="mb-1">{{ pia.nome }}</h1>
-                <p class="text-secondary mb-0">ID: {{ pia.id }}</p>
+                <h1 class="mb-1">Registro PIA #{{ pia.id }}</h1>
+                <p class="text-secondary mb-0">Análise de risco antifraude</p>
             </div>
             <div class="col-auto">
                 <button class="br-button secondary" type="button" (click)="editarRegistro()">
@@ -50,50 +50,48 @@
 
         <!-- Cartões de Informação -->
         <div class="row mb-4">
-            <!-- Card 1: Risco -->
             <div class="col-md-4">
                 <div class="info-card">
                     <div class="info-card__header">
-                        <h3 class="info-card__title">Nível de Risco</h3>
+                        <h3 class="info-card__title">Risco IA</h3>
                     </div>
                     <div class="info-card__body">
                         <div class="info-value">
-                            <span [ngClass]="obterClasseBadgeRisco(pia.nivelRisco)">
-                                {{ pia.nivelRisco }}
+                            <span [ngClass]="obterClasseBadgeRisco(pia.risco)">
+                                {{ labelRisco(pia.risco) }}
                             </span>
                         </div>
-                        <p class="info-label">Taxa: {{ pia.taxaRisco }}%</p>
+                        <p class="info-label">Confiança: {{ formatarConfianca(pia.confiancaIa) }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Card 2: Status -->
             <div class="col-md-4">
                 <div class="info-card">
                     <div class="info-card__header">
-                        <h3 class="info-card__title">Status da Análise</h3>
+                        <h3 class="info-card__title">Status</h3>
                     </div>
                     <div class="info-card__body">
                         <div class="info-value">
-                            <span [ngClass]="obterClasseBadgeStatus(pia.statusAnalise)">
-                                {{ pia.statusAnalise }}
+                            <span [ngClass]="obterClasseBadgeStatus(pia.status)">
+                                {{ labelStatusPia(pia.status) }}
                             </span>
                         </div>
-                        <p class="info-label">Última atualização: {{ formatarData(pia.dataUltimoRegistro) }}</p>
+                        <p class="info-label">Grau de interesse: {{ labelGrauInteresse(pia.grauInteresse) }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Card 3: Dados -->
             <div class="col-md-4">
                 <div class="info-card">
                     <div class="info-card__header">
-                        <h3 class="info-card__title">Informações Pessoais</h3>
+                        <h3 class="info-card__title">Incidentes</h3>
                     </div>
                     <div class="info-card__body">
                         <div class="info-value">
-                            <p class="info-label">CPF: {{ formatarCPF(pia.cpf) }}</p>
+                            <p class="info-value-number">{{ pia.totalIncidentes }}</p>
                         </div>
+                        <p class="info-label">Último: {{ formatarData(pia.dataUltimoIncidente) }}</p>
                     </div>
                 </div>
             </div>
@@ -106,29 +104,18 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="detail-item">
-                        <label class="detail-item__label">Nome Completo</label>
-                        <p class="detail-item__value">{{ pia.nome }}</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="detail-item">
-                        <label class="detail-item__label">CPF</label>
-                        <p class="detail-item__value">{{ formatarCPF(pia.cpf) }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="detail-item">
-                        <label class="detail-item__label">ID ONAC</label>
+                        <label class="detail-item__label">ID</label>
                         <p class="detail-item__value">{{ pia.id }}</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="detail-item">
-                        <label class="detail-item__label">Taxa de Risco</label>
-                        <p class="detail-item__value">{{ pia.taxaRisco }}%</p>
+                        <label class="detail-item__label">Grau de Interesse</label>
+                        <p class="detail-item__value">
+                            <span [ngClass]="obterClasseBadgeRisco(pia.grauInteresse)">
+                                {{ labelGrauInteresse(pia.grauInteresse) }}
+                            </span>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -136,22 +123,52 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="detail-item">
-                        <label class="detail-item__label">Nível de Risco</label>
+                        <label class="detail-item__label">Risco IA</label>
                         <p class="detail-item__value">
-                            <span [ngClass]="obterClasseBadgeRisco(pia.nivelRisco)">
-                                {{ pia.nivelRisco }}
+                            <span [ngClass]="obterClasseBadgeRisco(pia.risco)">
+                                {{ labelRisco(pia.risco) }}
                             </span>
                         </p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="detail-item">
-                        <label class="detail-item__label">Status da Análise</label>
+                        <label class="detail-item__label">Status</label>
                         <p class="detail-item__value">
-                            <span [ngClass]="obterClasseBadgeStatus(pia.statusAnalise)">
-                                {{ pia.statusAnalise }}
+                            <span [ngClass]="obterClasseBadgeStatus(pia.status)">
+                                {{ labelStatusPia(pia.status) }}
                             </span>
                         </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">Total de Incidentes</label>
+                        <p class="detail-item__value">{{ pia.totalIncidentes }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">Confiança IA</label>
+                        <p class="detail-item__value">{{ formatarConfianca(pia.confiancaIa) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">Data do Último Incidente</label>
+                        <p class="detail-item__value">{{ formatarData(pia.dataUltimoIncidente) }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <label class="detail-item__label">Data da Análise IA</label>
+                        <p class="detail-item__value">{{ formatarData(pia.dataAnaliseIa) }}</p>
                     </div>
                 </div>
             </div>
@@ -159,14 +176,18 @@
             <div class="row">
                 <div class="col-12">
                     <div class="detail-item">
-                        <label class="detail-item__label">Data do Último Registro</label>
-                        <p class="detail-item__value">{{ formatarData(pia.dataUltimoRegistro) }}</p>
+                        <label class="detail-item__label">Resumo IA</label>
+                        <p class="detail-item__value detail-item__value--text">{{ pia.resumoIa || '—' }}</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal Editar -->
+<app-pia-modal-criar *ngIf="mostrarModalEdicao && pia" [piaEmEdicao]="pia" (fechar)="fecharModalEdicao()"
+    (salvarEditar)="salvarPiaEditada($event)"></app-pia-modal-criar>
 
 <!-- Modal Confirmação Exclusão -->
 <div class="br-modal" *ngIf="mostrarModalConfirmacao" role="dialog" aria-modal="true">

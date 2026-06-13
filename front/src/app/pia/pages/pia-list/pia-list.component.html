@@ -188,11 +188,11 @@
 
 <!-- Modal Criar -->
 <app-pia-modal-criar *ngIf="mostrarModalCriar" [piaEmEdicao]="null" (fechar)="fecharModalCriar()"
-    (salvar)="salvarNovaPia($event)"></app-pia-modal-criar>
+    (salvarCriar)="salvarNovaPia($event)"></app-pia-modal-criar>
 
 <!-- Modal Editar -->
 <app-pia-modal-criar *ngIf="mostrarModalEdicao" [piaEmEdicao]="piaEmEdicao" (fechar)="fecharModalEdicao()"
-    (salvar)="salvarPiaEditada($event)"></app-pia-modal-criar>
+    (salvarEditar)="salvarPiaEditada($event)"></app-pia-modal-criar>
 
 <!-- Modal Confirmação Exclusão -->
 <div class="br-modal" *ngIf="mostrarModalConfirmacao" role="dialog" aria-modal="true">
