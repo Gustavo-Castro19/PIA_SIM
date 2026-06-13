@@ -23,45 +23,20 @@
         </div>
     </div>
 
-    <!-- Barra de Busca -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="br-input">
-                <label>Busca</label>
-                <input type="text" placeholder="Buscar por ID ONAC, CPF ou Nome..." [(ngModel)]="filtros.busca"
-                    (input)="aplicarFiltros()" />
-                <span class="br-icon">
-                    <i class="fas fa-search" aria-hidden="true"></i>
-                </span>
-            </div>
-        </div>
-    </div>
-
     <!-- Filtros -->
     <div class="row mb-3 align-items-end">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="br-select">
-                <label>Data do Relato</label>
-                <select [(ngModel)]="filtros.dataRelato">
-                    <option *ngFor="let opcao of opcoesDataRelato" [value]="opcao.value">
+                <label>Risco IA</label>
+                <select [(ngModel)]="filtros.risco">
+                    <option *ngFor="let opcao of opcoesRisco" [value]="opcao.value">
                         {{ opcao.label }}
                     </option>
                 </select>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="br-select">
-                <label>Nível de Risco</label>
-                <select [(ngModel)]="filtros.nivelRisco">
-                    <option *ngFor="let opcao of opcoesNivelRisco" [value]="opcao.value">
-                        {{ opcao.label }}
-                    </option>
-                </select>
-            </div>
-        </div>
-
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="br-select">
                 <label>Status</label>
                 <select [(ngModel)]="filtros.status">
@@ -72,7 +47,7 @@
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-4">
             <button class="br-button primary w-100 mb-1" type="button" (click)="aplicarFiltros()">
                 <i class="fas fa-filter" aria-hidden="true"></i>
                 Aplicar Filtros
@@ -91,26 +66,15 @@
                 <i class="fas fa-download" aria-hidden="true"></i>
                 Exportar Relatório
             </button>
-            <button class="br-button primary ms-2" type="button" (click)="gerarRegistrosRapidos()" [disabled]="gerandoRegistros">
-                <i class="fas fa-bolt" aria-hidden="true"></i>
-                {{ gerandoRegistros ? 'Gerando...' : 'Registros Rápidos' }}
-            </button>
         </div>
     </div>
 
-    <!-- Busca por CPF -->
-    <div class="row mb-3 p-3 bg-light rounded">
-        <div class="col-md-8">
-            <h6 class="mb-2"><i class="fas fa-search me-1"></i> Consultar por CPF</h6>
-            <div class="d-flex gap-2 align-items-end">
-                <div class="br-input flex-grow-1 mb-0">
-                    <input type="text" placeholder="Digite o CPF para consultar..." [value]="cpfBusca"
-                        (input)="formatarCPFInput($event)" (keyup.enter)="buscarCPF()" />
-                </div>
-                <button class="br-button primary" type="button" (click)="buscarCPF()">
-                    <i class="fas fa-search" aria-hidden="true"></i>
-                    Consultar
-                </button>
+    <!-- Erro -->
+    <div class="row mb-3" *ngIf="erro">
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle me-1" aria-hidden="true"></i>
+                {{ erro }}
             </div>
         </div>
     </div>
@@ -120,71 +84,85 @@
         <table class="br-table" role="table">
             <thead>
                 <tr>
-                    <th scope="col">ID ONAC</th>
-                    <th scope="col">Nome</th>
-                    <th scope="col">CPF</th>
-                    <th scope="col">Risco Estimado</th>
-                    <th scope="col">Data do Último Registro</th>
-                    <th scope="col">Status da Análise</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Risco IA</th>
+                    <th scope="col">Grau de Interesse</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Incidentes</th>
+                    <th scope="col">Último Incidente</th>
+                    <th scope="col">Confiança IA</th>
                     <th scope="col">Ações</th>
                 </tr>
             </thead>
             <tbody>
-                <ng-container *ngIf="registrosPaginados.length > 0; else estadoVazio">
-                    <tr *ngFor="let pia of registrosPaginados">
-                        <td>
-                            <strong>{{ pia.id }}</strong>
-                        </td>
-                        <td>{{ pia.nome }}</td>
-                        <td>{{ formatarCPF(pia.cpf) }}</td>
-                        <td>
-                            <span [ngClass]="obterClasseBadgeRisco(pia.nivelRisco)">
-                                {{ pia.nivelRisco }} ({{ pia.taxaRisco }})
-                            </span>
-                        </td>
-                        <td>{{ formatarData(pia.dataUltimoRegistro) }}</td>
-                        <td>
-                            <span [ngClass]="obterClasseBadgeStatus(pia.statusAnalise)">
-                                {{ pia.statusAnalise }}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="d-flex gap-2">
-                                <button class="br-button icon-only" type="button" title="Ver detalhes"
-                                    (click)="verDetalhes(pia.id)">
-                                    <i class="fas fa-eye" aria-hidden="true"></i>
-                                </button>
-                                <button class="br-button icon-only" type="button" title="Editar"
-                                    (click)="abrirModalEdicao(pia)">
-                                    <i class="fas fa-edit" aria-hidden="true"></i>
-                                </button>
-                                <button class="br-button icon-only danger" type="button" title="Excluir"
-                                    (click)="abrirModalConfirmacao(pia.id)">
-                                    <i class="fas fa-trash" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </ng-container>
+                <tr *ngIf="carregando">
+                    <td colspan="8" class="text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-2x text-secondary mb-2"></i>
+                        <p class="text-secondary mt-2 mb-0">Carregando registros...</p>
+                    </td>
+                </tr>
 
-                <!-- Estado Vazio -->
-                <ng-template #estadoVazio>
-                    <tr>
-                        <td colspan="7" class="text-center py-5">
-                            <i class="fas fa-inbox fa-2x text-secondary mb-2"></i>
-                            <p class="text-secondary mt-2">Nenhum registro encontrado.</p>
-                        </td>
-                    </tr>
-                </ng-template>
+                <ng-container *ngIf="!carregando">
+                    <ng-container *ngIf="registros.length > 0; else estadoVazio">
+                        <tr *ngFor="let pia of registros">
+                            <td>
+                                <strong>{{ pia.id }}</strong>
+                            </td>
+                            <td>
+                                <span [ngClass]="obterClasseBadgeRisco(pia.risco)">
+                                    {{ labelRisco(pia.risco) }}
+                                </span>
+                            </td>
+                            <td>
+                                <span [ngClass]="obterClasseBadgeGrau(pia.grauInteresse)">
+                                    {{ labelGrauInteresse(pia.grauInteresse) }}
+                                </span>
+                            </td>
+                            <td>
+                                <span [ngClass]="obterClasseBadgeStatus(pia.status)">
+                                    {{ labelStatusPia(pia.status) }}
+                                </span>
+                            </td>
+                            <td>{{ pia.totalIncidentes }}</td>
+                            <td>{{ formatarData(pia.dataUltimoIncidente) }}</td>
+                            <td>{{ formatarConfianca(pia.confiancaIa) }}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="br-button icon-only" type="button" title="Ver detalhes"
+                                        (click)="verDetalhes(pia.id)">
+                                        <i class="fas fa-eye" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="br-button icon-only" type="button" title="Editar"
+                                        (click)="abrirModalEdicao(pia)">
+                                        <i class="fas fa-edit" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="br-button icon-only danger" type="button" title="Excluir"
+                                        (click)="abrirModalConfirmacao(pia.id)">
+                                        <i class="fas fa-trash" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-container>
+
+                    <ng-template #estadoVazio>
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-inbox fa-2x text-secondary mb-2"></i>
+                                <p class="text-secondary mt-2 mb-0">Nenhum registro encontrado.</p>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </ng-container>
             </tbody>
         </table>
     </div>
 
     <!-- Paginação -->
-    <div class="row align-items-center mt-4 mb-4">
+    <div class="row align-items-center mt-4 mb-4" *ngIf="!carregando && totalRegistros > 0">
         <div class="col">
             <p class="text-secondary mb-0">
-                Exibindo {{ registrosPaginados.length }} de {{ registrosFiltrados.length }} registros
+                Exibindo {{ registros.length }} de {{ totalRegistros }} registros
             </p>
         </div>
         <div class="col-auto">
@@ -199,8 +177,8 @@
                     {{ pagina }}
                 </button>
 
-                <button class="br-button icon-only secondary" type="button" [disabled]="paginaAtual === totalPaginas"
-                    (click)="proximaPagina()">
+                <button class="br-button icon-only secondary" type="button"
+                    [disabled]="paginaAtual === totalPaginas || totalPaginas === 0" (click)="proximaPagina()">
                     <i class="fas fa-chevron-right" aria-hidden="true"></i>
                 </button>
             </nav>
@@ -208,9 +186,13 @@
     </div>
 </div>
 
-<!-- Modal Criar/Editar -->
-<app-pia-modal-criar *ngIf="mostrarModalCriar" [piaEmEdicao]="piaEmEdicao" (fechar)="fecharModalCriar()"
+<!-- Modal Criar -->
+<app-pia-modal-criar *ngIf="mostrarModalCriar" [piaEmEdicao]="null" (fechar)="fecharModalCriar()"
     (salvar)="salvarNovaPia($event)"></app-pia-modal-criar>
+
+<!-- Modal Editar -->
+<app-pia-modal-criar *ngIf="mostrarModalEdicao" [piaEmEdicao]="piaEmEdicao" (fechar)="fecharModalEdicao()"
+    (salvar)="salvarPiaEditada($event)"></app-pia-modal-criar>
 
 <!-- Modal Confirmação Exclusão -->
 <div class="br-modal" *ngIf="mostrarModalConfirmacao" role="dialog" aria-modal="true">
@@ -236,53 +218,3 @@
     </div>
 </div>
 <div class="br-modal__backdrop" *ngIf="mostrarModalConfirmacao" (click)="fecharModalConfirmacao()"></div>
-
-<!-- Modal Resultado Busca CPF -->
-<div class="br-modal" *ngIf="mostrandoResultadoBusca" role="dialog" aria-modal="true">
-    <div class="br-modal__content">
-        <div class="br-modal__header">
-            <h2 class="br-modal__title">Resultado da Consulta</h2>
-            <button class="br-button icon-only secondary" type="button" (click)="fecharResultadoBusca()"
-                aria-label="Fechar modal">
-                <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-        </div>
-        <div class="br-modal__body">
-            <ng-container *ngIf="resultadoBusca; else naoEncontrado">
-                <div class="text-center py-3">
-                    <i class="fas fa-user-check fa-3x text-success mb-3"></i>
-                    <p class="fs-5 fw-bold mb-1">Pessoa encontrada na Lista PIA</p>
-                    <p class="mb-0"><strong>Nome:</strong> {{ resultadoBusca.nome }}</p>
-                    <p class="mb-0"><strong>CPF:</strong> {{ formatarCPF(resultadoBusca.cpf) }}</p>
-                    <p class="mb-0"><strong>Risco:</strong>
-                        <span [ngClass]="obterClasseBadgeRisco(resultadoBusca.nivelRisco)">
-                            {{ resultadoBusca.nivelRisco }} ({{ resultadoBusca.taxaRisco }})
-                        </span>
-                    </p>
-                    <p class="mb-0"><strong>Status:</strong>
-                        <span [ngClass]="obterClasseBadgeStatus(resultadoBusca.statusAnalise)">
-                            {{ resultadoBusca.statusAnalise }}
-                        </span>
-                    </p>
-                </div>
-            </ng-container>
-            <ng-template #naoEncontrado>
-                <div class="text-center py-3">
-                    <i class="fas fa-user-slash fa-3x text-secondary mb-3"></i>
-                    <p class="fs-5 fw-bold mb-0">CPF não encontrado na Lista PIA</p>
-                    <p class="text-secondary mt-1">Nenhum registro associado a este CPF.</p>
-                </div>
-            </ng-template>
-        </div>
-        <div class="br-modal__footer">
-            <button class="br-button secondary" type="button" (click)="fecharResultadoBusca()">
-                Fechar
-            </button>
-            <button class="br-button primary" type="button" (click)="fecharResultadoBusca(); abrirModalCriar()"
-                *ngIf="!resultadoBusca">
-                Novo Registro
-            </button>
-        </div>
-    </div>
-</div>
-<div class="br-modal__backdrop" *ngIf="mostrandoResultadoBusca" (click)="fecharResultadoBusca()"></div>

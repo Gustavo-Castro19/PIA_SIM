@@ -110,6 +110,13 @@ p {
     padding-left: 0.5rem;
 }
 
+.col-md-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+}
+
 // Tabela Responsiva
 .table-responsive {
     overflow-x: auto;
@@ -428,6 +435,19 @@ p {
     }
 }
 
+// Alertas
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+
+    &.alert-danger {
+        background-color: #fee2e2;
+        color: $danger;
+        border: 1px solid $danger;
+    }
+}
+
 // Utilidades
 .mb-0 {
     margin-bottom: 0;
@@ -439,7 +459,8 @@ p {
 
 // Responsividade
 @media (max-width: 768px) {
-    .col-md-3 {
+    .col-md-3,
+    .col-md-4 {
         flex: 0 0 100%;
         max-width: 100%;
     }

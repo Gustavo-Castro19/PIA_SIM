@@ -1,7 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Pia, FiltrosPia } from '../../models/pia.model';
+import {
+    FiltrosPia,
+    GrauInteresse,
+    PiaCreateRequest,
+    PiaListItem,
+    PiaUpdateRequest,
+    Risco,
+    StatusPia
+} from '../../models/pia.model';
 import { PiaService } from '../../services/pia.service';
+import {
+    labelGrauInteresse,
+    labelRisco,
+    labelStatusPia,
+    opcoesRisco,
+    opcoesStatusPia,
+    SelectOption
+} from '../../utils/pia-labels';
 
 @Component({
     selector: 'app-pia-list',
@@ -9,52 +25,32 @@ import { PiaService } from '../../services/pia.service';
     styleUrls: ['./pia-list.component.scss']
 })
 export class PiaListComponent implements OnInit {
-    registros: Pia[] = [];
-    registrosFiltrados: Pia[] = [];
+    registros: PiaListItem[] = [];
+    totalRegistros = 0;
+    carregando = false;
+    erro: string | null = null;
 
-    // Paginação
     paginaAtual = 1;
     itensPorPagina = 10;
     totalPaginas = 0;
-    registrosPaginados: Pia[] = [];
 
     filtros: FiltrosPia = {
-        busca: '',
-        dataRelato: '',
-        nivelRisco: '',
+        risco: '',
         status: ''
     };
 
-    // Opções de selects
-    opcoesDataRelato = [
-        { value: '', label: 'Data do Relato' },
-        { value: 'hoje', label: 'Hoje' },
-        { value: '7dias', label: 'Últimos 7 dias' },
-        { value: '30dias', label: 'Últimos 30 dias' },
-        { value: '90dias', label: 'Últimos 90 dias' }
-    ];
+    opcoesRisco: SelectOption<Risco>[] = opcoesRisco();
+    opcoesStatus: SelectOption<StatusPia>[] = opcoesStatusPia();
 
-    opcoesNivelRisco = [
-        { value: '', label: 'Nível de Risco' },
-        { value: 'Alto', label: 'Alto' },
-        { value: 'Médio', label: 'Médio' },
-        { value: 'Baixo', label: 'Baixo' }
-    ];
-
-    opcoesStatus = [
-        { value: '', label: 'Status' },
-        { value: 'Pendente', label: 'Pendente' },
-        { value: 'Em Análise', label: 'Em Análise' },
-        { value: 'Concluído', label: 'Concluído' },
-        { value: 'Arquivado', label: 'Arquivado' }
-    ];
-
-    // Modais
     mostrarModalCriar = false;
     mostrarModalEdicao = false;
     mostrarModalConfirmacao = false;
-    piaEmEdicao: Partial<Pia> | null = null;
-    piaParaExcluir: string | null = null;
+    piaEmEdicao: PiaListItem | null = null;
+    piaParaExcluir: number | null = null;
+
+    labelRisco = labelRisco;
+    labelStatusPia = labelStatusPia;
+    labelGrauInteresse = labelGrauInteresse;
 
     constructor(
         private piaService: PiaService,
@@ -62,29 +58,30 @@ export class PiaListComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        // Carrega dados de exemplo
-        this.piaService.loadMockData();
         this.carregarRegistros();
     }
 
     carregarRegistros(): void {
-        this.piaService.getAll(this.filtros).subscribe(
-            (pias: Pia[]) => {
-                this.registrosFiltrados = pias;
-                this.atualizarPaginacao();
+        this.carregando = true;
+        this.erro = null;
+
+        this.piaService.listar(this.filtros, this.paginaAtual, this.itensPorPagina).subscribe({
+            next: (resposta) => {
+                this.registros = resposta.data;
+                this.totalRegistros = resposta.total;
+                this.paginaAtual = resposta.pagina;
+                this.itensPorPagina = resposta.porPagina;
+                this.totalPaginas = Math.ceil(this.totalRegistros / this.itensPorPagina) || 0;
+                this.carregando = false;
+            },
+            error: (erro: Error) => {
+                this.erro = erro.message;
+                this.registros = [];
+                this.totalRegistros = 0;
+                this.totalPaginas = 0;
+                this.carregando = false;
             }
-        );
-    }
-
-    atualizarPaginacao(): void {
-        this.totalPaginas = Math.ceil(this.registrosFiltrados.length / this.itensPorPagina);
-        if (this.paginaAtual > this.totalPaginas) {
-            this.paginaAtual = this.totalPaginas || 1;
-        }
-
-        const inicio = (this.paginaAtual - 1) * this.itensPorPagina;
-        const fim = inicio + this.itensPorPagina;
-        this.registrosPaginados = this.registrosFiltrados.slice(inicio, fim);
+        });
     }
 
     aplicarFiltros(): void {
@@ -94,9 +91,7 @@ export class PiaListComponent implements OnInit {
 
     limparFiltros(): void {
         this.filtros = {
-            busca: '',
-            dataRelato: '',
-            nivelRisco: '',
+            risco: '',
             status: ''
         };
         this.paginaAtual = 1;
@@ -104,50 +99,9 @@ export class PiaListComponent implements OnInit {
     }
 
     exportarRelatorio(): void {
-        if (this.registrosFiltrados.length === 0) {
-            alert('Nenhum registro para exportar.');
-            return;
-        }
-
-        // Prepara cabeçalhos
-        const cabecalhos = ['ID ONAC', 'Nome', 'CPF', 'Taxa de Risco', 'Nível de Risco', 'Data do Último Registro', 'Status da Análise'];
-
-        // Prepara linhas de dados
-        const linhas = this.registrosFiltrados.map(pia => [
-            pia.id,
-            pia.nome,
-            pia.cpf,
-            pia.taxaRisco,
-            pia.nivelRisco,
-            new Date(pia.dataUltimoRegistro).toLocaleDateString('pt-BR'),
-            pia.statusAnalise
-        ]);
-
-        // Cria conteúdo CSV
-        const conteudoCSV = [
-            cabecalhos.join(','),
-            ...linhas.map(linha =>
-                linha.map(celula =>
-                    typeof celula === 'string' && celula.includes(',')
-                        ? `"${celula}"`
-                        : celula
-                ).join(',')
-            )
-        ].join('\n');
-
-        // Download do arquivo
-        const blob = new Blob([conteudoCSV], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `relatorio-pia-${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        this.piaService.baixarCsv();
     }
 
-    // Modal Criar
     abrirModalCriar(): void {
         this.mostrarModalCriar = true;
         this.piaEmEdicao = null;
@@ -157,21 +111,19 @@ export class PiaListComponent implements OnInit {
         this.mostrarModalCriar = false;
     }
 
-    salvarNovaPia(novaPia: Partial<Pia>): void {
-        this.piaService.create(novaPia).subscribe(
-            (pia: Pia) => {
-                console.log('PIA criada:', pia);
+    salvarNovaPia(dados: PiaCreateRequest): void {
+        this.piaService.criar(dados).subscribe({
+            next: () => {
                 this.fecharModalCriar();
                 this.carregarRegistros();
             },
-            (erro) => {
-                console.error('Erro ao criar PIA:', erro);
+            error: (erro: Error) => {
+                console.error('Erro ao criar PIA:', erro.message);
             }
-        );
+        });
     }
 
-    // Modal Edição
-    abrirModalEdicao(pia: Pia): void {
+    abrirModalEdicao(pia: PiaListItem): void {
         this.piaEmEdicao = { ...pia };
         this.mostrarModalEdicao = true;
     }
@@ -181,23 +133,23 @@ export class PiaListComponent implements OnInit {
         this.piaEmEdicao = null;
     }
 
-    salvarPiaEditada(piaEditada: Partial<Pia>): void {
-        if (this.piaEmEdicao && this.piaEmEdicao.id) {
-            this.piaService.update(this.piaEmEdicao.id, piaEditada).subscribe(
-                (pia: Pia) => {
-                    console.log('PIA atualizada:', pia);
-                    this.fecharModalEdicao();
-                    this.carregarRegistros();
-                },
-                (erro) => {
-                    console.error('Erro ao atualizar PIA:', erro);
-                }
-            );
+    salvarPiaEditada(dados: PiaUpdateRequest): void {
+        if (!this.piaEmEdicao) {
+            return;
         }
+
+        this.piaService.atualizar(this.piaEmEdicao.id, dados).subscribe({
+            next: () => {
+                this.fecharModalEdicao();
+                this.carregarRegistros();
+            },
+            error: (erro: Error) => {
+                console.error('Erro ao atualizar PIA:', erro.message);
+            }
+        });
     }
 
-    // Modal Confirmação Exclusão
-    abrirModalConfirmacao(id: string): void {
+    abrirModalConfirmacao(id: number): void {
         this.piaParaExcluir = id;
         this.mostrarModalConfirmacao = true;
     }
@@ -208,72 +160,29 @@ export class PiaListComponent implements OnInit {
     }
 
     confirmarExclusao(): void {
-        if (this.piaParaExcluir) {
-            this.piaService.delete(this.piaParaExcluir).subscribe(
-                () => {
-                    console.log('PIA excluída');
-                    this.fecharModalConfirmacao();
-                    this.carregarRegistros();
-                },
-                (erro) => {
-                    console.error('Erro ao excluir PIA:', erro);
-                }
-            );
-        }
-    }
-
-    // Navegação
-    verDetalhes(id: string): void {
-        this.router.navigate(['/pia', id]);
-    }
-
-    // Busca por CPF
-    cpfBusca = '';
-    resultadoBusca: Pia | null = null;
-    mostrandoResultadoBusca = false;
-
-    buscarCPF(): void {
-        const cpfLimpo = this.cpfBusca.replace(/\D/g, '');
-        if (cpfLimpo.length !== 11) {
-            alert('Digite um CPF válido (11 dígitos)');
+        if (this.piaParaExcluir === null) {
             return;
         }
 
-        this.piaService.buscarPorCPF(this.cpfBusca).subscribe(pia => {
-            this.resultadoBusca = pia;
-            this.mostrandoResultadoBusca = true;
+        this.piaService.excluir(this.piaParaExcluir).subscribe({
+            next: () => {
+                this.fecharModalConfirmacao();
+                this.carregarRegistros();
+            },
+            error: (erro: Error) => {
+                console.error('Erro ao excluir PIA:', erro.message);
+            }
         });
     }
 
-    fecharResultadoBusca(): void {
-        this.mostrandoResultadoBusca = false;
-        this.resultadoBusca = null;
-        this.cpfBusca = '';
+    verDetalhes(id: number): void {
+        this.router.navigate(['/pia', id]);
     }
 
-    formatarCPFInput(event: any): void {
-        let cpf = event.target.value.replace(/\D/g, '');
-        if (cpf.length > 11) cpf = cpf.substring(0, 11);
-        cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-        this.cpfBusca = cpf;
-    }
-
-    // Gerar Registros Rápidos
-    gerandoRegistros = false;
-
-    gerarRegistrosRapidos(): void {
-        this.gerandoRegistros = true;
-        this.piaService.gerarRegistrosRapidos().subscribe(registros => {
-            this.carregarRegistros();
-            this.gerandoRegistros = false;
-        });
-    }
-
-    // Paginação
     irParaPagina(pagina: number): void {
-        if (pagina >= 1 && pagina <= this.totalPaginas) {
+        if (pagina >= 1 && pagina <= this.totalPaginas && pagina !== this.paginaAtual) {
             this.paginaAtual = pagina;
-            this.atualizarPaginacao();
+            this.carregarRegistros();
         }
     }
 
@@ -286,7 +195,7 @@ export class PiaListComponent implements OnInit {
     }
 
     obterNumerosPaginas(): number[] {
-        const numeros = [];
+        const numeros: number[] = [];
         const maximo = Math.min(this.totalPaginas, 5);
         const inicio = Math.max(1, this.paginaAtual - Math.floor(maximo / 2));
         const fim = Math.min(this.totalPaginas, inicio + maximo - 1);
@@ -297,40 +206,48 @@ export class PiaListComponent implements OnInit {
         return numeros;
     }
 
-    obterClasseBadgeRisco(nivelRisco: string): string {
-        switch (nivelRisco) {
-            case 'Alto':
+    obterClasseBadgeRisco(risco: Risco): string {
+        switch (risco) {
+            case 'ALTO':
                 return 'br-tag danger';
-            case 'Médio':
+            case 'MEDIO':
                 return 'br-tag warning';
-            case 'Baixo':
+            case 'BAIXO':
                 return 'br-tag success';
             default:
                 return 'br-tag';
         }
     }
 
-    obterClasseBadgeStatus(status: string): string {
+    obterClasseBadgeGrau(grau: GrauInteresse): string {
+        return this.obterClasseBadgeRisco(grau);
+    }
+
+    obterClasseBadgeStatus(status: StatusPia): string {
         switch (status) {
-            case 'Pendente':
-                return 'br-tag warning';
-            case 'Em Análise':
+            case 'ATIVO':
                 return 'br-tag info';
-            case 'Concluído':
+            case 'SUSPEITO':
+                return 'br-tag warning';
+            case 'CONFIRMADO':
+                return 'br-tag danger';
+            case 'INOCENTE':
                 return 'br-tag success';
-            case 'Arquivado':
+            case 'ARQUIVADO':
                 return 'br-tag';
             default:
                 return 'br-tag';
         }
     }
 
-    formatarCPF(cpf: string): string {
-        return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    formatarData(data: string): string {
+        if (!data) {
+            return '—';
+        }
+        return new Date(data).toLocaleDateString('pt-BR');
     }
 
-    formatarData(data: Date | string): string {
-        const d = typeof data === 'string' ? new Date(data) : data;
-        return d.toLocaleDateString('pt-BR');
+    formatarConfianca(valor: number): string {
+        return `${Math.round(valor * 100)}%`;
     }
 }
